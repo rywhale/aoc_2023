@@ -57,8 +57,6 @@ purrr::walk(
     last_card <- min(.x + card_score, length(card_counts))
     
     if(first_card <= last_card){
-      message("Card score: ", card_score)
-      message("Increasing cards ", first_card, " to ", last_card, " by ", (1 * card_counts[.x]))
       card_counts[first_card:last_card] <<- card_counts[first_card:last_card] + (1 * card_counts[.x])
     }
   }
