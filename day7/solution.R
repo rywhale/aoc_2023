@@ -35,7 +35,6 @@ get_hand_type <- function(hand) {
 }
 
 make_card_score_str <- function(hand, card_lookup) {
-  
   hand_sp <- stringr::str_split_1(hand, "")
 
   card_scores <- purrr::map_chr(
@@ -46,77 +45,74 @@ make_card_score_str <- function(hand, card_lookup) {
   paste(card_scores, collapse = "")
 }
 
-convert_card_score_str <- function(score_str){
-  
+convert_card_score_str <- function(score_str) {
   score_str_sp <- stringr::str_split_1(score_str, "")
-  
+
   letter_score <- purrr::map_int(
     score_str_sp,
-    ~{which(letters == .x)}
+    ~ {
+      which(letters == .x)
+    }
   )
-  
+
   sum(letter_score)
 }
 
 jokerize <- function(hand, card_lookup) {
-  
-  if(!stringr::str_detect(hand, "J")){
+  if (!stringr::str_detect(hand, "J")) {
     return(hand)
-  }else{
+  } else {
     hand_elem <- stringr::str_split_1(hand, "")
-    hand_tbl <- sort(table(hand_elem))
-    
+
     joker_pos <- which(hand_elem == "J")
     joker_count <- length(joker_pos)
     possible_replacements <- names(card_lookup)[names(card_lookup) != "J"]
-    
+
     replace_combs <- utils::combn(
-      rep(possible_replacements, joker_count), 
-      joker_count, 
+      rep(possible_replacements, joker_count),
+      joker_count,
       simplify = FALSE
     ) |>
       unique()
-    
+
     replace_strs <- purrr::map_chr(
       replace_combs,
-      ~{
+      ~ {
         hand_elem[joker_pos] <- .x
         paste(hand_elem, collapse = "")
       }
     )
-    
+
     loop_count <- 1
     best_score <- 0
     out <- ""
-    while(loop_count <= length(replace_strs) & best_score != 7){
+    while (loop_count <= length(replace_strs) & best_score != 7) {
       # message("Loop: ", loop_count, " Max: ", length(replace_strs))
       str_score <- get_hand_type(replace_strs[loop_count])
-      
-      if(str_score > best_score){
+
+      if (str_score > best_score) {
         best_score <- str_score
         out <- replace_strs[loop_count]
       }
-      
+
       loop_count <- loop_count + 1
     }
-    
+
     replace_scores <- purrr::map_int(
       replace_strs,
       get_hand_type
     )
-    
+
     out <- replace_strs[which.max(replace_scores)][[1]]
   }
-  
+
   out
 }
 
 input_scored <- input |>
   dplyr::rowwise() |>
   dplyr::mutate(
-    hand_type = get_hand_type(hand)
-  ) |>
-  dplyr::mutate(
+    hand_type = get_hand_type(hand),
     card_scores = make_card_score_str(
       hand,
       card_lookup_pt1
@@ -150,9 +146,6 @@ input_scored_pt2 <- input |>
     hand_type = get_hand_type(hand),
     hand_jok = jokerize(hand, card_lookup_pt2),
     hand_type_jok = get_hand_type(hand_jok),
-  ) |>
-  dplyr::rowwise() |> 
-  dplyr::mutate(
     card_scores = make_card_score_str(
       hand,
       card_lookup_pt2
@@ -177,5 +170,5 @@ input_scored_pt2 <- input |>
   dplyr::mutate(
     final_score = bid * dplyr::row_number()
   )
-  
+
 message("Part 2 solution is: ", sum(input_scored_pt2$final_score))
